@@ -120,9 +120,7 @@ void effectBreathe() {
     breatheModifier = -breatheModifier;
   }
   breatheBrightness += breatheModifier;
-  Serial.println(breatheModifier);
 
-  Serial.println(breatheBrightness);
   strip.setBrightness(breatheBrightness);
   strip.show();                          //  Update strip to match
 }

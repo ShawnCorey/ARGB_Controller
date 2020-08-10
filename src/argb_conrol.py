@@ -2,10 +2,11 @@ import serial
 import time
 import struct
 from enum import Enum, auto
+import argparse
 
 
-ser = serial.Serial('/dev/ttyACM0')
-ser.timeout = 2
+# ser = serial.Serial('/dev/ttyACM0')
+# ser.timeout = 2
 
 
 class Settings(Enum):
@@ -23,9 +24,9 @@ class Effects(Enum):
 
 
 def sendCommand(serial, command):
-    print(command)
+    # print(command)
     ser.write(command)
-    response = ser.readlines()
+    response = ser.readline()
     for line in response:
         print(line)
 
@@ -89,48 +90,59 @@ def setEffectBreathe(ser, R, G, B):
     setEffect(ser, b'E' + effect + encR + encG + encB)
 
 
-setLEDLength(ser, 42)
-setBrightness(ser, 10)
-setDelay(ser, 100)
+parser = argparse.ArgumentParser()
 
-setEffectBreathe(ser, 255, 0, 255)
+parser.add_argument('-s', '--serial-port', help='Set serial port to use', required=True)
 
-# setLEDLength(ser, 9)
+parser.add_argument('-e', '--effect', choices=['solid','rainbow','chase','wipe','breathe'],
+                    help='Set lighting effect', required=False)
 
-# setBrightness(ser, 5)
+parser.add_argument('--chase-length', type=int, help='Set the length for the chase effect', required=False)
 
-# setDelay(ser, 64)
 
-# setLEDLength(ser, 42)
+parser.add_argument('-c', '--color', nargs=3, type=int,
+                    help='Set the color for the related effect use "-c <R> <G> <B>"', required=False)
 
-# setEffectChase(ser, 1, 0, 0, 255)
-# time.sleep(2)
+parser.add_argument('-b', '--brightness', type=int, help='Set the brightness', required=False)
 
-# setEffectChase(ser, 5, 0, 255, 255)
-# time.sleep(2)
-# setBrightness(ser, 10)
+parser.add_argument('-d', '--delay', type=int, help='Set the effect delay', required=False)
 
-# setEffectSolid(ser, 255, 255, 255)
+parser.add_argument('-l', '--length', type=int, help='Set the LED string length', required=False)
 
-# setEffectSolid(ser, 0, 0, 255)
-# time.sleep(2)
-# setEffectSolid(ser, 0, 255, 0)
-# time.sleep(2)
-# setLEDLength(ser, 18)
-# time.sleep(2)
-# setEffectSolid(ser, 255, 0, 0)
-# time.sleep(2)
+args = parser.parse_args()
 
-# setLEDLength(ser, 42)
+ser = serial.Serial(args.serial_port)
+ser.timeout = 1
 
-# setEffectWipe(ser, 255, 0, 255)
-# time.sleep(10)
-# setBrightness(ser, 10)
-# time.sleep(2)
-# setBrightness(ser, 5)
+if args.delay != None:
+    setDelay(ser, args.delay)
 
-# setEffectRainbow(ser)
+if args.brightness != None:
+    setBrightness(ser, args.brightness)
 
-# setDelay(ser, 10)
+if args.length != None:
+    setLEDLength(ser, args.length)
 
-# setLEDLength(ser, 42)
+if args.effect != None:
+    if args.effect == "rainbow":
+        setEffectRainbow(ser)
+    if args.effect == "solid":
+        if args.color == None:
+            print("Color required!")
+            exit(-1)
+        setEffectSolid(ser, args.color[0], args.color[1], args.color[2])
+    if args.effect == "chase":
+        if args.color == None or args.chase_length == None:
+            print("Color and Chase Length required!")
+            exit(-1)
+        setEffectChase(ser, args.chase_length, args.color[0], args.color[1], args.color[2])
+    if args.effect == "wipe":
+        if args.color == None:
+            print("Color required!")
+            exit(-1)
+        setEffectWipe(ser, args.color[0], args.color[1], args.color[2])
+    if args.effect == "breathe":
+        if args.color == None:
+            print("Color required!")
+            exit(-1)
+        setEffectBreathe(ser, args.color[0], args.color[1], args.color[2])
