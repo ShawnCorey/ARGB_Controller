@@ -4,7 +4,11 @@
 #ifdef __AVR__
   #include <avr/power.h>
 #endif
- 
+
+// Most of this code is taken straight from the Adafruit WS2812b example(s), so go there for how to
+// do the stuff :). Just adding in code to allow for changing effects/settings live so it can be
+// used as an ARGB controller for computers with out the port on the motherboard
+
 // Which pin on the Arduino is connected to the NeoPixels?
 #define PIN            15
 
@@ -192,7 +196,7 @@ void parseCommand(byte* commandBytes, int byteSize){
           currentEffect = EFFECT_SOLID;
           Serial.println("Effect set to: Solid");
           break;
-        case EFFECT_WIPE: // Solid color effect
+        case EFFECT_WIPE: // Color wipe effect
           wipeColor = strip.Color(commandBytes[2], commandBytes[3], commandBytes[4]);
           currentEffect = EFFECT_WIPE;
           Serial.println("Effect set to: Wipe");
@@ -227,14 +231,10 @@ void loop() {
   strip.setBrightness(brightness);
   switch(currentEffect){
     case EFFECT_SOLID:
-        // Fill along the length of the strip in various colors...
-      //colorWipe(strip.Color(255,   0,   0), delayval); // Red
-      //colorWipe(strip.Color(  0, 255,   0), delayval); // Green
-      //colorWipe(strip.Color(  0,   0, 255), delayval); // Blue
       effectSolid(solidColor);
       break;
     case EFFECT_RAINBOW:
-      rainbow();             // Flowing rainbow cycle along the whole strip
+      rainbow();
       break;
     case EFFECT_CHASE:
       effectChase();
