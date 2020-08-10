@@ -1,3 +1,5 @@
+#include <Arduino.h>
+
 #include <Adafruit_NeoPixel.h>
 #ifdef __AVR__
   #include <avr/power.h>
@@ -9,7 +11,7 @@
 #define SERIAL_BUFFER_SIZE 512
 
 // How many NeoPixels are attached to the Arduino?
-uint16_t numPixels = 42;
+uint16_t numPixels = 40;
 
 byte serialBuffer[SERIAL_BUFFER_SIZE];
 
@@ -22,7 +24,8 @@ enum effectList {
   EFFECT_SOLID,
   EFFECT_RAINBOW,
   EFFECT_CHASE,
-  EFFECT_WIPE
+  EFFECT_WIPE,
+  EFFECT_BREATHE
 };
 
 enum settingList {
@@ -39,6 +42,10 @@ uint16_t chaseStart = 0; // Variable to hold the current start LED of the chase 
 
 uint32_t solidColor = 0; // Color for the solid effect
 uint32_t wipeColor = 0;  // Color for the wipe effect
+
+uint32_t breatheColor = 0;  // Color for the breath effect
+int32_t breatheBrightness = 0;  // Current brightness for the breath effect
+int32_t breatheModifier = 1; // Modifier for breath effect
 
 void setup() 
 {
@@ -100,10 +107,26 @@ void effectSolid(uint32_t color) {
   strip.show();                          //  Update strip to match
 }
 
+// Fill strip with a solid color
+void effectBreathe() {
+  for(int i=0; i<strip.numPixels(); i++) { // For each pixel in strip...
+    strip.setPixelColor(i, breatheColor);         //  Set pixel's color (in RAM)
+  }
+  if (breatheBrightness > brightness || breatheBrightness < 1) {
+    breatheModifier = -breatheModifier;
+  }
+  breatheBrightness += breatheModifier;
+  Serial.println(breatheModifier);
+
+  Serial.println(breatheBrightness);
+  strip.setBrightness(breatheBrightness);
+  strip.show();                          //  Update strip to match
+}
+
 // Strip will display a block of specified color that will move
 // down the strip starting with the first LED and moving to the last,
 // wrapping around to the beginning when the end is reached
-void ledChase(){
+void effectChase(){
   strip.clear();
   int stripSize = strip.numPixels();
   int ledNum;
@@ -187,6 +210,13 @@ void parseCommand(byte* commandBytes, int byteSize){
           currentEffect = EFFECT_CHASE;
           Serial.println("Effect set to: Chase");
           break;
+        case EFFECT_BREATHE: // Rainbow effect
+          currentEffect = EFFECT_BREATHE;
+          Serial.println("Effect set to: Breathe");
+          breatheColor = strip.Color(commandBytes[2], commandBytes[3], commandBytes[4]);
+          breatheBrightness = brightness;
+          breatheModifier = -1;
+          break;
       }
     break;
   }
@@ -207,12 +237,14 @@ void loop() {
       rainbow();             // Flowing rainbow cycle along the whole strip
       break;
     case EFFECT_CHASE:
-      ledChase();
+      effectChase();
       break;
     case EFFECT_WIPE:
       strip.clear();
       strip.show();
       effectWipe(wipeColor);
+    case EFFECT_BREATHE:
+      effectBreathe();
   }
 
   while (Serial.available() > 0){
