@@ -4,11 +4,6 @@ import struct
 from enum import Enum, auto
 import argparse
 
-
-# ser = serial.Serial('/dev/ttyACM0')
-# ser.timeout = 2
-
-
 class Settings(Enum):
     Brightness = 0
     Delay = 1
@@ -24,7 +19,6 @@ class Effects(Enum):
 
 
 def sendCommand(serial, command):
-    # print(command)
     ser.write(command)
     response = ser.readline()
     for line in response:
